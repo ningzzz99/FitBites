@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "FitBites",
+    "slug": "fitbites-mobile",
+    "scheme": "fitbites",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#f7faf7"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {},
+    "plugins": [
+      "expo-router",
+      "expo-image-picker"
+    ]
+  }
+}

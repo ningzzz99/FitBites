@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "mobile:install": "npm --prefix mobile install",
+    "mobile:start": "npm --prefix mobile run start",
+    "mobile:lan": "npm --prefix mobile run start -- --lan",
+    "mobile:tunnel": "npm --prefix mobile run start -- --tunnel",
+    "mobile:android": "npm --prefix mobile run android",
+    "mobile:ios": "npm --prefix mobile run ios"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
