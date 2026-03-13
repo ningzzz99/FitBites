@@ -23,9 +23,10 @@ interface Props {
   post: Post;
   currentUserId: number;
   onAction?: () => void;
+  isHiddenView?: boolean;
 }
 
-export default function PostCard({ post, currentUserId, onAction }: Props) {
+export default function PostCard({ post, currentUserId, onAction, isHiddenView }: Props) {
   const [upvotes, setUpvotes] = useState(post.upvotes);
   const [voted, setVoted] = useState(false);
   const [repliesOpen, setRepliesOpen] = useState(false);
@@ -86,6 +87,11 @@ export default function PostCard({ post, currentUserId, onAction }: Props) {
     if (res.ok) onAction?.();
   }
 
+  async function handleUnhide() {
+    const res = await fetch(`/api/posts/${post.post_id}/unhide`, { method: 'POST' });
+    if (res.ok) onAction?.();
+  }
+
   const displayName = post.anonymous ? 'Anonymous' : (post.username ?? 'User');
   const isAuthor = currentUserId === post.user_id;
 
@@ -124,6 +130,14 @@ export default function PostCard({ post, currentUserId, onAction }: Props) {
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         Delete Post
+                      </button>
+                    ) : isHiddenView ? (
+                      <button
+                        onClick={() => { handleUnhide(); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-green-600 hover:bg-green-50 transition"
+                      >
+                        <EyeOff className="w-3.5 h-3.5" />
+                        Unhide Post
                       </button>
                     ) : (
                       <button

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, LayoutGrid, MessageSquare, Plus, ArrowLeft } from 'lucide-react';
+import { Users, LayoutGrid, MessageSquare, Plus, ArrowLeft, EyeOff } from 'lucide-react';
 import PostCard from '@/components/community/PostCard';
 import CreateGroupModal from '@/components/community/CreateGroupModal';
 import GroupChat from '@/components/community/GroupChat';
@@ -19,8 +19,9 @@ interface Group {
 
 export default function CommunityPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'feed' | 'groups'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'groups' | 'hidden'>('feed');
   const [posts, setPosts] = useState<Post[]>([]);
+  const [hiddenPosts, setHiddenPosts] = useState<Post[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number>(0);
@@ -33,15 +34,21 @@ export default function CommunityPage() {
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
   const loadData = useCallback(async () => {
+    setLoading(true);
     const meRes = await fetch('/api/auth/me');
     const { user } = await meRes.json();
 
     if (user) {
       setCurrentUserId(user.id);
-      // Load groups if logged in
+      // Load groups
       const groupsRes = await fetch('/api/groups');
       const groupsData = await groupsRes.json();
       setGroups(Array.isArray(groupsData) ? groupsData : []);
+
+      // Load hidden posts
+      const hiddenRes = await fetch('/api/posts/hidden');
+      const hiddenData = await hiddenRes.json();
+      setHiddenPosts(Array.isArray(hiddenData) ? hiddenData : []);
     }
 
     const postsRes = await fetch('/api/posts');
@@ -77,23 +84,31 @@ export default function CommunityPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-20">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-green-700">Community</h1>
 
         {/* Tab Switcher */}
-        <div className="flex bg-gray-100 p-1 rounded-2xl">
+        <div className="flex bg-gray-100 p-1 rounded-2xl overflow-x-auto max-w-full">
           <button
             onClick={() => { setActiveTab('feed'); setSelectedGroup(null); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition ${activeTab === 'feed' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap ${activeTab === 'feed' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <LayoutGrid className="w-4 h-4" /> Discovery
           </button>
           <button
-            onClick={() => setActiveTab('groups')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition ${activeTab === 'groups' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => { setActiveTab('groups'); setSelectedGroup(null); }}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap ${activeTab === 'groups' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <Users className="w-4 h-4" /> Peer Groups
           </button>
+          {currentUserId > 0 && (
+            <button
+              onClick={() => { setActiveTab('hidden'); setSelectedGroup(null); }}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap ${activeTab === 'hidden' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <EyeOff className="w-4 h-4" /> Hidden
+            </button>
+          )}
         </div>
       </div>
 
@@ -101,6 +116,7 @@ export default function CommunityPage() {
         <div className="max-w-lg mx-auto">
           {currentUserId ? (
             <form onSubmit={handlePost} className="bg-white border border-gray-100 rounded-3xl p-5 mb-8 shadow-sm">
+              {/* ... post form ... */}
               <h2 className="text-sm font-bold text-gray-800 mb-3">Share a tip or ask a question</h2>
               <textarea value={content} onChange={(e) => setContent(e.target.value)}
                 placeholder="e.g. Any quick healthy meal ideas for a busy student?"
@@ -160,7 +176,7 @@ export default function CommunityPage() {
             </div>
           )}
         </div>
-      ) : (
+      ) : activeTab === 'groups' ? (
         /* Peer Groups Tab */
         <div className="max-w-xl mx-auto">
           {!currentUserId ? (
@@ -230,6 +246,37 @@ export default function CommunityPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Hidden Posts Tab */
+        <div className="max-w-lg mx-auto">
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-gray-800">Hidden Posts</h2>
+            <p className="text-sm text-gray-400">Manage posts you&apos;ve hidden from your discovery feed.</p>
+          </div>
+
+          {loading ? (
+            <div className="flex flex-col gap-4">
+              {[1, 2].map(i => <div key={i} className="h-40 bg-gray-100 animate-pulse rounded-3xl" />)}
+            </div>
+          ) : hiddenPosts.length === 0 ? (
+            <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center">
+              <EyeOff className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+              <p className="text-sm text-gray-400 font-medium">You haven&apos;t hidden any posts yet.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {hiddenPosts.map((post) => (
+                <PostCard
+                  key={post.post_id}
+                  post={post}
+                  currentUserId={currentUserId}
+                  onAction={loadData}
+                  isHiddenView={true}
+                />
+              ))}
             </div>
           )}
         </div>
