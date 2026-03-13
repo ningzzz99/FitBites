@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ThumbsUp, MessageSquare, Send } from 'lucide-react';
+import { ThumbsUp, MessageSquare, Send, MoreVertical, Trash2, EyeOff } from 'lucide-react';
 import type { Post } from '@/types';
 
 const TOPIC_COLORS: Record<string, string> = {
@@ -22,9 +22,10 @@ interface Reply {
 interface Props {
   post: Post;
   currentUserId: number;
+  onAction?: () => void;
 }
 
-export default function PostCard({ post }: Props) {
+export default function PostCard({ post, currentUserId, onAction }: Props) {
   const [upvotes, setUpvotes] = useState(post.upvotes);
   const [voted, setVoted] = useState(false);
   const [repliesOpen, setRepliesOpen] = useState(false);
@@ -33,6 +34,7 @@ export default function PostCard({ post }: Props) {
   const [replyContent, setReplyContent] = useState('');
   const [replyAnon, setReplyAnon] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function handleUpvote() {
     if (voted) return;
@@ -73,36 +75,85 @@ export default function PostCard({ post }: Props) {
     setSubmitting(false);
   }
 
+  async function handleDelete() {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    const res = await fetch(`/api/posts/${post.post_id}`, { method: 'DELETE' });
+    if (res.ok) onAction?.();
+  }
+
+  async function handleHide() {
+    const res = await fetch(`/api/posts/${post.post_id}/hide`, { method: 'POST' });
+    if (res.ok) onAction?.();
+  }
+
   const displayName = post.anonymous ? 'Anonymous' : (post.username ?? 'User');
+  const isAuthor = currentUserId === post.user_id;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
-        <div>
-          <p className="text-sm font-semibold text-gray-800">{displayName}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
           <p className="text-xs text-gray-400">{new Date(post.created_at).toLocaleDateString()}</p>
         </div>
-        {post.topic && (
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${TOPIC_COLORS[post.topic] ?? 'bg-gray-100 text-gray-600'}`}>
-            {post.topic}
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {post.topic && (
+            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${TOPIC_COLORS[post.topic] ?? 'bg-gray-100 text-gray-600'}`}>
+              {post.topic}
+            </span>
+          )}
+          {currentUserId > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-600"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+              {menuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-100 rounded-xl shadow-lg z-20 overflow-hidden">
+                    {isAuthor ? (
+                      <button
+                        onClick={() => { handleDelete(); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete Post
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => { handleHide(); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 transition"
+                      >
+                        <EyeOff className="w-3.5 h-3.5" />
+                        Hide Post
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <p className="text-sm text-gray-700 leading-relaxed mb-3">{post.content}</p>
 
       <div className="flex items-center gap-2">
         <button onClick={handleUpvote} disabled={voted}
-          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition ${
-            voted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600'
-          }`}>
+          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition ${voted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600'
+            }`}>
           <ThumbsUp className="w-3.5 h-3.5" />
           {upvotes}
         </button>
         <button onClick={toggleReplies}
-          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition ${
-            repliesOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600'
-          }`}>
+          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition ${repliesOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600'
+            }`}>
           <MessageSquare className="w-3.5 h-3.5" />
           {repliesLoaded ? `${replies.length} repl${replies.length === 1 ? 'y' : 'ies'}` : 'Reply'}
         </button>

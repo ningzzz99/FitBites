@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Flame, Coins } from 'lucide-react';
+import { Flame, Coins, Plus } from 'lucide-react';
 import ChallengeCard from '@/components/challenges/ChallengeCard';
 import FunFactPopup from '@/components/fun-fact/FunFactPopup';
+import HabitModal from '@/components/habits/HabitModal';
 import type { DailyChallenge } from '@/types';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -18,6 +19,7 @@ export default function HomePage() {
   const [coins, setCoins] = useState(0);
   const [weekDays, setWeekDays] = useState<WeekDay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     const res = await fetch('/api/challenges');
@@ -42,6 +44,10 @@ export default function HomePage() {
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen"><p className="text-gray-400 text-sm">Loading your challenges…</p></div>;
   }
+
+  const currentHabitIds = challenges
+    .map(c => c.habit_id)
+    .filter((id): id is number => id !== undefined && id !== null);
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6">
@@ -70,11 +76,10 @@ export default function HomePage() {
             const label = DAY_LABELS[day.getDay() === 0 ? 6 : day.getDay() - 1];
             return (
               <div key={date} className="flex flex-col items-center gap-1">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                  completed ? 'bg-green-500 text-white'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${completed ? 'bg-green-500 text-white'
                     : idx === weekDays.length - 1 ? 'bg-gray-100 border-2 border-dashed border-gray-300 text-gray-400'
-                    : 'bg-gray-100 text-gray-300'
-                }`}>{completed ? '✓' : ''}</div>
+                      : 'bg-gray-100 text-gray-300'
+                  }`}>{completed ? '✓' : ''}</div>
                 <span className="text-[10px] text-gray-400">{label}</span>
               </div>
             );
@@ -82,19 +87,46 @@ export default function HomePage() {
         </div>
       </div>
 
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">Today&apos;s Challenges</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-gray-700">Today&apos;s Challenges</h2>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-700 hover:bg-green-50 px-2 py-1 rounded-lg transition"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Manage
+        </button>
+      </div>
+
       {challenges.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           <p className="text-sm">No habits selected yet.</p>
-          <a href="/onboarding" className="text-green-600 text-sm font-medium hover:underline mt-1 block">Pick your habits →</a>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="text-green-600 text-sm font-medium hover:underline mt-1 block w-full text-center"
+          >
+            Manage habits →
+          </button>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           {challenges.map((c) => (
-            <ChallengeCard key={c.challenge_id} challenge={c} onComplete={handleComplete} />
+            <ChallengeCard
+              key={c.challenge_id}
+              challenge={c}
+              onComplete={handleComplete}
+              onRemove={loadData}
+            />
           ))}
         </div>
       )}
+
+      <HabitModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onRefresh={loadData}
+        currentHabitIds={currentHabitIds}
+      />
     </div>
   );
 }

@@ -1,27 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { requireAuth } from '@/lib/session';
+import { requireAuth, getSession } from '@/lib/session';
 
 export async function GET() {
   try {
-    await requireAuth();
+    const session = await getSession();
+    const userId = session.userId;
     const db = getDb();
-    const posts = db.prepare(`
-      SELECT p.id as post_id, p.user_id, p.content, p.topic, p.anonymous, p.upvotes, p.created_at,
-             u.username
-      FROM posts p JOIN users u ON u.id = p.user_id
-      ORDER BY p.created_at DESC
-      LIMIT 50
-    `).all() as { post_id: number; user_id: number; content: string; topic: string; anonymous: number; upvotes: number; created_at: string; username: string }[];
 
-    const mapped = posts.map((p) => ({
+    // If logged in, filter out hidden posts. If guest, show everything.
+    let posts;
+    if (userId) {
+      posts = db.prepare(`
+        SELECT p.id as post_id, p.user_id, p.content, p.topic, p.anonymous, p.upvotes, p.created_at,
+               u.username
+        FROM posts p JOIN users u ON u.id = p.user_id
+        WHERE p.id NOT IN (SELECT post_id FROM hidden_posts WHERE user_id = ?)
+        ORDER BY p.created_at DESC
+        LIMIT 50
+      `).all(userId);
+    } else {
+      posts = db.prepare(`
+        SELECT p.id as post_id, p.user_id, p.content, p.topic, p.anonymous, p.upvotes, p.created_at,
+               u.username
+        FROM posts p JOIN users u ON u.id = p.user_id
+        ORDER BY p.created_at DESC
+        LIMIT 50
+      `).all();
+    }
+
+    const mapped = (posts as any[]).map((p) => ({
       ...p,
       anonymous: Boolean(p.anonymous),
       username: p.anonymous ? undefined : p.username,
     }));
     return NextResponse.json(mapped);
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    console.error('COMMUNITY_GET_ERROR:', error);
+    // Return empty list instead of 401 to prevent redirect loop for guests
+    return NextResponse.json([]);
   }
 }
 

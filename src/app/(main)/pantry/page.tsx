@@ -46,7 +46,7 @@ export default function PantryPage() {
 
   useEffect(() => {
     if (tab === 'recipes') loadRecipes(ingredients, calorieLimit);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
   const loadRecipes = useCallback(async (currentIngredients: Ingredient[], limit: number | '') => {
@@ -172,7 +172,7 @@ export default function PantryPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {suggestions.map((r) => <RecipeCard key={r.recipe_id} recipe={r} />)}
+              {suggestions.map((r, idx) => <RecipeCard key={`${r.recipe_id}-${idx}`} recipe={r} />)}
             </div>
           )}
         </>

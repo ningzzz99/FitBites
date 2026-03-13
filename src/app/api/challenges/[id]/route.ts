@@ -22,6 +22,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
        WHERE id = ?`
     ).run(today, proof_image_url, Number(id));
 
+    // Get the task name for the notification
+    const fullChallenge = db.prepare(`
+      SELECT COALESCE(h.task, ch.task) as task_name
+      FROM daily_challenges dc
+      LEFT JOIN habits h ON h.id = dc.habit_id
+      LEFT JOIN custom_habits ch ON ch.id = dc.custom_habit_id
+      WHERE dc.id = ?
+    `).get(Number(id)) as { task_name: string };
+
+    // Post to all groups the user is in
+    const userGroups = db.prepare('SELECT group_id FROM group_members WHERE user_id = ?').all(userId) as { group_id: number }[];
+    const insMsg = db.prepare('INSERT INTO group_messages (group_id, user_id, content, type) VALUES (?, ?, ?, ?)');
+    for (const g of userGroups) {
+      insMsg.run(g.group_id, userId, `completed the habit: ${fullChallenge.task_name}!`, 'notification');
+    }
+
     // Award 10 coins to user
     db.prepare('UPDATE users SET total_coins = total_coins + 10 WHERE id = ?').run(userId);
 
