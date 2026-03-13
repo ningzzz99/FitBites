@@ -4,11 +4,16 @@ import { requireAuth } from '@/lib/session';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  // 1. Update type to expect a Promise
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   try {
     await requireAuth();
-    const postId = parseInt(params.id, 10);
+    
+    // 2. Await the params before accessing .id
+    const resolvedParams = await params;
+    const postId = parseInt(resolvedParams.id, 10);
+    
     const db = getDb();
 
     const replies = db
@@ -30,11 +35,16 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  // 3. Update type here as well
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   try {
     const { userId } = await requireAuth();
-    const postId = parseInt(params.id, 10);
+    
+    // 4. Await params (you already had the logic here, just needed the type fix above!)
+    const resolvedParams = await params;
+    const postId = parseInt(resolvedParams.id, 10);
+    
     const { content, anonymous } = (await req.json()) as {
       content: string;
       anonymous: boolean;

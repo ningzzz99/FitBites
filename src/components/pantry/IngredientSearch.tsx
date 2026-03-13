@@ -9,7 +9,7 @@ import { buildTrie, suggest } from '@/lib/algorithms/levenshtein';
 const COMMON_INGREDIENTS = [
   'apple', 'avocado', 'banana', 'beef', 'bell pepper', 'bread', 'broccoli',
   'butter', 'carrot', 'cheese', 'chicken breast', 'chocolate', 'cinnamon',
-  'cucumber', 'egg', 'eggs', 'feta cheese', 'garlic', 'ginger', 'honey',
+  'cucumber', 'egg', 'feta cheese', 'garlic', 'ginger', 'honey',
   'lemon', 'lemon juice', 'lettuce', 'lime', 'mayo', 'milk', 'mushroom',
   'oats', 'olive oil', 'onion', 'orange', 'pasta', 'peanut butter',
   'peas', 'pepper', 'potato', 'red onion', 'rice', 'salt', 'soy sauce',
@@ -65,7 +65,7 @@ export default function IngredientSearch({ onAdd }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search ingredients…"
-          className="flex-1 text-sm outline-none"
+          className="flex-1 text-sm text-gray-900 outline-none placeholder-gray-500"
         />
         {loadingApi && <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />}
       </div>
@@ -76,7 +76,7 @@ export default function IngredientSearch({ onAdd }: Props) {
             <li key={s}>
               <button
                 onClick={() => handleSelect(s)}
-                className="w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 hover:text-green-700 transition"
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-500 hover:bg-green-50 hover:text-green-700 transition"
               >
                 {s}
               </button>

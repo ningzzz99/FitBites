@@ -150,18 +150,18 @@ export default function ProfilePage() {
           <div>
             <label className="block text-xs text-gray-500 mb-1">Height (cm)</label>
             <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="170"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400 placeholder-gray-500" />
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Weight (kg)</label>
             <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="65"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400 placeholder-gray-500" />
           </div>
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Dietary requirements</label>
           <input type="text" value={dietaryReq} onChange={(e) => setDietaryReq(e.target.value)} placeholder="e.g. vegetarian, nut allergy"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400 placeholder-gray-500" />
         </div>
       </div>
 

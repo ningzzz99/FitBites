@@ -134,7 +134,7 @@ export default function PantryPage() {
                     <button onClick={() => updateQty(ing.ingredient_id, -1)} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
                       <Minus className="w-3 h-3 text-gray-600" />
                     </button>
-                    <span className="text-sm font-medium w-6 text-center">{ing.quantity}</span>
+                    <span className="text-sm font-medium w-6 text-center text-gray-900">{ing.quantity}</span>
                     <button onClick={() => updateQty(ing.ingredient_id, 1)} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
                       <Plus className="w-3 h-3 text-gray-600" />
                     </button>
@@ -154,7 +154,7 @@ export default function PantryPage() {
           <div className="flex flex-wrap items-center gap-3 mb-5">
             <label className="text-sm text-gray-600 shrink-0">Daily calorie limit</label>
             <input type="number" value={calorieLimit} onChange={(e) => setCalorieLimit(e.target.value ? Number(e.target.value) : '')}
-              placeholder="e.g. 500" className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-green-400" />
+              placeholder="e.g. 500" className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-900 w-28 focus:outline-none focus:ring-2 focus:ring-green-400 placeholder-gray-500" />
             {calorieLimit !== '' && <button onClick={() => setCalorieLimit('')} className="text-xs text-gray-400 hover:text-gray-600">Clear</button>}
             <button onClick={() => loadRecipes(ingredients, calorieLimit)}
               className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">

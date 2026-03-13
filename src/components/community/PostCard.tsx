@@ -64,10 +64,11 @@ export default function PostCard({ post }: Props) {
     const res = await fetch(`/api/posts/${post.post_id}/replies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: replyContent.trim(), anonymous: replyAnon }),
+      body: JSON.stringify({ content: replyContent.trim(), anonymous: replyAnon?1:0 }),
     });
     if (res.ok) {
       setReplyContent('');
+      setReplyAnon(false);
       await loadReplies();
     }
     setSubmitting(false);
@@ -93,16 +94,14 @@ export default function PostCard({ post }: Props) {
 
       <div className="flex items-center gap-2">
         <button onClick={handleUpvote} disabled={voted}
-          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition ${
-            voted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600'
-          }`}>
+          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition ${voted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600'
+            }`}>
           <ThumbsUp className="w-3.5 h-3.5" />
           {upvotes}
         </button>
         <button onClick={toggleReplies}
-          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition ${
-            repliesOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600'
-          }`}>
+          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition ${repliesOpen ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600'
+            }`}>
           <MessageSquare className="w-3.5 h-3.5" />
           {repliesLoaded ? `${replies.length} repl${replies.length === 1 ? 'y' : 'ies'}` : 'Reply'}
         </button>
@@ -126,7 +125,12 @@ export default function PostCard({ post }: Props) {
           <form onSubmit={handleReply} className="flex flex-col gap-2">
             <textarea value={replyContent} onChange={(e) => setReplyContent(e.target.value)}
               placeholder="Write a reply…" rows={2} maxLength={300}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-green-400" />
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-green-400 placeholder-gray-500" />
+            {replyContent.trim().length > 0 && replyContent.trim().length < 5 && (
+              <p className="text-[10px] text-orange-500 px-1 -mt-1">
+                Please enter at least {5 - replyContent.trim().length} more characters to send.
+              </p>
+            )}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
                 <input type="checkbox" checked={replyAnon} onChange={(e) => setReplyAnon(e.target.checked)} className="rounded" />

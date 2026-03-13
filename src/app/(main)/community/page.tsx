@@ -61,7 +61,7 @@ export default function CommunityPage() {
         <textarea value={content} onChange={(e) => setContent(e.target.value)}
           placeholder="e.g. Any quick healthy meal ideas for a busy student?"
           rows={3} maxLength={500}
-          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-400 mb-3" />
+          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-green-400 mb-3 placeholder-gray-500" />
 
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <select value={topic} onChange={(e) => setTopic(e.target.value)}
