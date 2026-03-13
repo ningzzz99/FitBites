@@ -23,21 +23,24 @@ Web runs at `http://localhost:3000`.
 The mobile client lives in `mobile/` and calls the same API routes used by the web app.
 
 ### 1. Install mobile dependencies
-
+At root directory:
 ```bash
 npm run mobile:install
 ```
 
 ### 2. Configure backend URL for your phone
 
-Copy `mobile/.env.example` to `mobile/.env` and set:
+**Eduroam firewall is highly restricted that this may not work under Eduroam connection. Instead launch a personal hotspot on your phone and connect to it on computer, and follow the instructions below.**
+
+Create `.env` under `mobile/`, so the path is `mobile/.env` then copy and paste the following command to `.env`:
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=http://YOUR_LOCAL_IP:3000
 ```
-**Eduroam firewall is highly restricted that this may not work under Eduroam connection. Instead launch a personal hotspot on your phone and connect to it on computer, and follow the instructions below.**
 
-Use your computer's LAN IP so a physical device can reach the Next.js API server. To find the IP, run `ipconfig` in command line and look for the IPv4 address.
+Replace `YOUR_LOCAL_IP` with your computer's LAN IP so a physical device can reach the Next.js API server. 
+
+To find the IP on Windows, run `ipconfig` in command line and look for the IPv4 address.
 
 
 ### 3. Start mobile development
