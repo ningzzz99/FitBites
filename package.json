@@ -9,8 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.9.0",
-    "@supabase/supabase-js": "^2.98.0",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",
     "iron-session": "^8.0.4",
