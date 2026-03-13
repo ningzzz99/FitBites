@@ -5,11 +5,12 @@ import { requireAuth } from '@/lib/session';
 // GET /api/groups/[id]/messages - Get message history
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { userId } = await requireAuth();
-        const groupId = parseInt(params.id);
+        const { id } = await params;
+        const groupId = parseInt(id);
         const db = getDb();
 
         // Verify membership
@@ -38,11 +39,12 @@ export async function GET(
 // POST /api/groups/[id]/messages - Send a message or reminder
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { userId } = await requireAuth();
-        const groupId = parseInt(params.id);
+        const { id } = await params;
+        const groupId = parseInt(id);
         const { content, type = 'text' } = await req.json();
         const db = getDb();
 

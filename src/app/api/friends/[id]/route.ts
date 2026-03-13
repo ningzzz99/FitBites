@@ -4,11 +4,12 @@ import { requireAuth } from '@/lib/session';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await requireAuth();
-    const friendId = parseInt(params.id, 10);
+    const { id } = await params;
+    const friendId = parseInt(id, 10);
     const { status } = (await req.json()) as { status: 'accepted' | 'rejected' };
 
     if (!['accepted', 'rejected'].includes(status)) {

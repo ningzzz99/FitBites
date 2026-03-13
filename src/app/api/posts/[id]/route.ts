@@ -4,11 +4,12 @@ import { requireAuth } from '@/lib/session';
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { userId } = await requireAuth();
-        const postId = parseInt(params.id);
+        const { id } = await params;
+        const postId = parseInt(id);
 
         const db = getDb();
 

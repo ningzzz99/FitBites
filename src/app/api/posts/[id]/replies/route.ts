@@ -4,11 +4,12 @@ import { requireAuth } from '@/lib/session';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAuth();
-    const postId = parseInt(params.id, 10);
+    const { id } = await params;
+    const postId = parseInt(id, 10);
     const db = getDb();
 
     const replies = db
@@ -30,11 +31,12 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await requireAuth();
-    const postId = parseInt(params.id, 10);
+    const { id } = await params;
+    const postId = parseInt(id, 10);
     const { content, anonymous } = (await req.json()) as {
       content: string;
       anonymous: boolean;
