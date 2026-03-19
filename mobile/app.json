@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "FitBites",
+    "slug": "fitbites-mysql",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#f7faf7"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fitbites.mysql"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f7faf7"
+      },
+      "package": "com.fitbites.mysql"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow FitBites to access your photos for challenge proof."
+        }
+      ]
+    ]
+  }
+}

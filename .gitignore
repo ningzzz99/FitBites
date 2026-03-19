@@ -1,41 +1,34 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
+**/node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Database files (keep tracked)
+!*.db
+!*.db-shm
+!*.db-wal
 
-# testing
-/coverage
+# Environment & secrets
+.env
+.env.local
+.env.*
 
-# next.js
-/.next/
-/out/
+# Expo / React Native
+mobile/.expo/
+mobile/dist/
+mobile/ios/build/
+mobile/ios/Pods/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/local.properties
 
-# production
-/build
-
-# misc
+# macOS
 .DS_Store
-*.pem
 
-# debug
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts

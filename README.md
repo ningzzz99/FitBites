@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FitBites (React Native + SQLite)
 
-## Getting Started
+Standalone React Native + SQLite version of FitBites.
 
-First, run the development server:
+## Project Structure
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+FitBites-MySQL/
+├── backend/   → Node.js + Express + SQLite (better-sqlite3)
+└── mobile/    → React Native (Expo) + React Navigation
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Backend
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cd backend
+npm install
+npm run dev    # development (auto-reload with nodemon)
+npm start      # production
+```
 
-## Learn More
+The SQLite database (`fitbites.db`) is created automatically on first run in the `backend/` folder. All tables and seed data (habits, recipes, fun facts) are set up without any manual steps.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Mobile App
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cd mobile
+npm install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Set your backend URL** — open `src/lib/api.js` and update `BASE_URL`:
+- iOS Simulator: `http://localhost:3001` (default)
+- Android Emulator: `http://10.0.2.2:3001` (default)
+- Physical device: `http://<your-computer-local-ip>:3001`
 
-## Deploy on Vercel
+Start the app:
+```bash
+npm start       # opens Expo DevTools
+npm run ios     # iOS simulator
+npm run android # Android emulator
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Auth** — Register, Login, Logout with session cookies
+- **Daily Challenges** — Generated from selected habits, complete with photo proof
+- **Streak Tracking** — Consecutive day counter with 7-day week view
+- **Coin Rewards** — 10 coins per completed challenge
+- **Pantry** — Add/edit ingredients with quantity controls
+- **Recipes** — Smart recipe matching based on pantry ingredients
+- **Community** — Posts with topics, upvotes, and replies; anonymous mode
+- **Leaderboard** — Global and friends rankings by streak & coins
+- **Friends** — Send/accept friend requests, search users
+- **Profile** — Health metrics, customizable banner colors & icons (coin shop)
+- **Badges** — Earned for milestones (e.g. First Post)
+- **Fun Facts** — Daily health/nutrition tips
