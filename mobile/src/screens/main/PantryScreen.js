@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Pressable,
   RefreshControl,
@@ -16,7 +17,8 @@ import {
   ApiError,
   addIngredient,
   getIngredients,
-  getRecipes,
+  getMealsByIngredient,
+  getMealById,
   removeIngredient,
   updateIngredientQuantity,
 } from '../../lib/api';
@@ -31,6 +33,8 @@ export default function PantryScreen({ navigation }) {
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [mealDetail, setMealDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const loadData = useCallback(async (spinner = true) => {
     if (spinner) setLoading(true);
     try {
@@ -101,14 +105,52 @@ export default function PantryScreen({ navigation }) {
     }
     setRecipesLoading(true);
     try {
-      const names = ingredients.map((row) => row.ingredient_name);
-      const result = await getRecipes(names);
-      setRecipes(result);
-    } catch {
-      setRecipes([]);
+      const results = await Promise.allSettled(
+        ingredients.map((row) =>
+          getMealsByIngredient(row.ingredient_name).then((meals) =>
+            meals.slice(0, 2).map((m) => ({ ...m, sourceIngredient: row.ingredient_name }))
+          )
+        )
+      );
+      const seen = new Set();
+      const merged = [];
+      for (const r of results) {
+        if (r.status !== 'fulfilled') continue;
+        for (const meal of r.value) {
+          if (!seen.has(meal.idMeal)) {
+            seen.add(meal.idMeal);
+            merged.push(meal);
+          }
+        }
+      }
+      setRecipes(merged);
     } finally {
       setRecipesLoading(false);
     }
+  }
+
+  async function openRecipe(meal) {
+    setSelectedRecipe(meal);
+    setMealDetail(null);
+    setDetailLoading(true);
+    try {
+      const detail = await getMealById(meal.idMeal);
+      setMealDetail(detail);
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+  function parseMealIngredients(meal) {
+    const items = [];
+    for (let i = 1; i <= 20; i++) {
+      const name = meal[`strIngredient${i}`];
+      const measure = meal[`strMeasure${i}`];
+      if (name && name.trim()) {
+        items.push(`${measure ? measure.trim() + ' ' : ''}${name.trim()}`);
+      }
+    }
+    return items;
   }
 
   return (
@@ -199,18 +241,17 @@ export default function PantryScreen({ navigation }) {
           ) : null}
 
           {recipes.map((recipe) => (
-            <Pressable key={recipe.recipe_id} style={styles.recipeCard} onPress={() => setSelectedRecipe(recipe)}>
-              <Text style={styles.recipeTitle}>{recipe.recipe_name}</Text>
-              <Text style={styles.recipeMeta}>
-                Pantry match {Math.round(recipe.matchPercentage)}%
-              </Text>
-              {recipe.missingCount > 0 ? (
-                <Text style={styles.recipeMissing}>
-                  Missing {recipe.missingCount} ingredient(s)
-                </Text>
-              ) : null}
-              <Text style={styles.recipeInstructions} numberOfLines={2}>{recipe.instructions}</Text>
-              <Text style={styles.tapHint}>Tap to view full recipe</Text>
+            <Pressable key={recipe.idMeal} style={styles.recipeCard} onPress={() => openRecipe(recipe)}>
+              <View style={styles.recipeRow}>
+                {recipe.strMealThumb ? (
+                  <Image source={{ uri: recipe.strMealThumb }} style={styles.recipeThumb} />
+                ) : null}
+                <View style={styles.recipeInfo}>
+                  <Text style={styles.recipeTitle}>{recipe.strMeal}</Text>
+                  <Text style={styles.recipeMeta}>via {recipe.sourceIngredient}</Text>
+                  <Text style={styles.tapHint}>Tap to view full recipe</Text>
+                </View>
+              </View>
             </Pressable>
           ))}
         </View>
@@ -226,38 +267,38 @@ export default function PantryScreen({ navigation }) {
       <View style={styles.modalBackdrop}>
         <View style={styles.modalCard}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle} numberOfLines={2}>{selectedRecipe?.recipe_name}</Text>
+            <Text style={styles.modalTitle} numberOfLines={2}>{selectedRecipe?.strMeal}</Text>
             <Pressable onPress={() => setSelectedRecipe(null)} style={styles.modalCloseBtn}>
               <Text style={styles.modalCloseText}>✕</Text>
             </Pressable>
           </View>
 
-          {selectedRecipe ? (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>Match</Text>
-                <Text style={styles.modalMeta}>
-                  {Math.round(selectedRecipe.matchPercentage)}% pantry match
-                  {selectedRecipe.missingCount > 0
-                    ? ` · missing ${selectedRecipe.missingCount} ingredient(s)`
-                    : ''}
-                </Text>
-              </View>
+          {detailLoading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
+          ) : mealDetail ? (
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+              {mealDetail.strMealThumb ? (
+                <Image source={{ uri: mealDetail.strMealThumb }} style={styles.modalImage} />
+              ) : null}
+
+              {mealDetail.strCategory || mealDetail.strArea ? (
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalMeta}>
+                    {[mealDetail.strCategory, mealDetail.strArea].filter(Boolean).join(' · ')}
+                  </Text>
+                </View>
+              ) : null}
 
               <View style={styles.modalSection}>
                 <Text style={styles.modalLabel}>Ingredients</Text>
-                {(() => {
-                  let items = [];
-                  try { items = JSON.parse(selectedRecipe.ingredients); } catch {}
-                  return items.map((ing, i) => (
-                    <Text key={i} style={styles.modalIngredient}>• {ing}</Text>
-                  ));
-                })()}
+                {parseMealIngredients(mealDetail).map((item, i) => (
+                  <Text key={i} style={styles.modalIngredient}>• {item}</Text>
+                ))}
               </View>
 
               <View style={styles.modalSection}>
                 <Text style={styles.modalLabel}>Instructions</Text>
-                <Text style={styles.modalInstructions}>{selectedRecipe.instructions}</Text>
+                <Text style={styles.modalInstructions}>{mealDetail.strInstructions}</Text>
               </View>
             </ScrollView>
           ) : null}
@@ -320,20 +361,21 @@ const styles = StyleSheet.create({
   },
   findButtonText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   recipeCard: {
-    borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 10, gap: 6,
+    borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 10,
   },
-  recipeTitle: { color: colors.text, fontWeight: '700', fontSize: 16 },
-  recipeMeta: { color: colors.primary, fontWeight: '600' },
-  recipeMissing: { color: colors.warning },
-  recipeInstructions: { color: colors.textMuted, lineHeight: 18, flexShrink: 1 },
-  tapHint: { color: colors.primary, fontSize: 11, fontWeight: '600', marginTop: 2 },
+  recipeRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  recipeThumb: { width: 64, height: 64, borderRadius: 10 },
+  recipeInfo: { flex: 1, gap: 4 },
+  recipeTitle: { color: colors.text, fontWeight: '700', fontSize: 15 },
+  recipeMeta: { color: colors.primary, fontWeight: '600', fontSize: 12 },
+  tapHint: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
   modalBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
   modalCard: {
     backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 20, maxHeight: '85%',
+    padding: 20, maxHeight: '85%', flex: 1,
   },
   modalHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -347,6 +389,7 @@ const styles = StyleSheet.create({
   modalCloseText: { fontSize: 14, color: colors.textMuted, fontWeight: '700' },
   modalSection: { marginBottom: 16 },
   modalLabel: { fontWeight: '700', color: colors.text, marginBottom: 6 },
+  modalImage: { width: '100%', height: 180, borderRadius: 12, marginBottom: 12 },
   modalMeta: { color: colors.primary, fontWeight: '600' },
   modalIngredient: { color: colors.text, lineHeight: 22 },
   modalInstructions: { color: colors.text, lineHeight: 22 },

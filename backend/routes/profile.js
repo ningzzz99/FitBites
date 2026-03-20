@@ -10,7 +10,7 @@ router.get('/', requireAuth, (req, res) => {
   try {
     const db = getDb();
     const user = db.prepare(
-      'SELECT id, username, email, height, weight, dietary_req, total_coins, shown_in_leaderboard, banner_color, banner_icon FROM users WHERE id = ?'
+      'SELECT id, username, email, height, weight, dietary_req, total_coins, current_streak, shown_in_leaderboard, banner_color, banner_icon FROM users WHERE id = ?'
     ).get(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -18,9 +18,7 @@ router.get('/', requireAuth, (req, res) => {
       'SELECT id as badge_id, badge_type, label, awarded_at FROM badges WHERE user_id = ? ORDER BY awarded_at DESC'
     ).all(userId);
 
-    const streakRow = db.prepare(
-      'SELECT COALESCE(MAX(streak_count), 0) as streak FROM daily_challenges WHERE user_id = ?'
-    ).get(userId);
+    const streakRow = { streak: user.current_streak ?? 0 };
 
     const unlockedItems = db.prepare(
       'SELECT item_type, item_value FROM unlocked_banner_items WHERE user_id = ?'

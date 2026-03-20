@@ -10,9 +10,11 @@ import {
   View,
 } from 'react-native';
 import { ApiError, getHabits, getUserHabits, saveUserHabits } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../constants/theme';
 
 export default function OnboardingScreen({ navigation, route }) {
+  const { finishOnboarding } = useAuth();
   const editMode = route?.params?.editMode ?? false;
   const [habits, setHabits] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -57,7 +59,7 @@ export default function OnboardingScreen({ navigation, route }) {
       if (editMode) {
         navigation.goBack();
       } else {
-        navigation.navigate('Main');
+        finishOnboarding();
       }
     } catch (err) {
       if (err instanceof ApiError) {

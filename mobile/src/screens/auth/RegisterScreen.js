@@ -35,7 +35,6 @@ export default function RegisterScreen({ navigation }) {
     setError('');
     try {
       await signUp(username, email, password);
-      navigation.navigate('Onboarding');
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

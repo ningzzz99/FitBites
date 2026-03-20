@@ -100,6 +100,8 @@ export default function ProfileScreen() {
       });
       await loadProfile(false);
       await refreshUser();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not save profile.');
     } finally {
       setSaving(false);
     }

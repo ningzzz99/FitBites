@@ -122,6 +122,7 @@ router.patch('/:id', requireAuth, (req, res) => {
     const logs = history.map((r) => ({ date: r.date, completed: r.status === 'completed' }));
     const streak = computeStreak(logs);
     db.prepare('UPDATE daily_challenges SET streak_count = ? WHERE id = ?').run(streak, challengeId);
+    db.prepare('UPDATE users SET current_streak = ? WHERE id = ?').run(streak, userId);
 
     const user = db.prepare('SELECT total_coins FROM users WHERE id = ?').get(userId);
     return res.json({ ok: true, coins: user.total_coins, streak });

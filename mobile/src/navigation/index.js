@@ -56,20 +56,19 @@ function MainTabs() {
   );
 }
 
-// Root stack includes Onboarding accessible both before and after login
-function RootStack({ isLoggedIn }) {
+function RootStack({ isLoggedIn, isNewUser }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isLoggedIn ? (
         <>
+          {isNewUser && <Stack.Screen name="Onboarding" component={OnboardingScreen} />}
           <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          {!isNewUser && <Stack.Screen name="Onboarding" component={OnboardingScreen} />}
         </>
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         </>
       )}
     </Stack.Navigator>
@@ -77,7 +76,7 @@ function RootStack({ isLoggedIn }) {
 }
 
 export default function AppNavigator() {
-  const { user, loading } = useAuth();
+  const { user, loading, isNewUser } = useAuth();
 
   if (loading) {
     return (
@@ -89,7 +88,7 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <RootStack isLoggedIn={!!user} />
+      <RootStack isLoggedIn={!!user} isNewUser={isNewUser} />
     </NavigationContainer>
   );
 }

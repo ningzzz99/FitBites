@@ -90,14 +90,27 @@ export const updateIngredientQuantity = (id, quantity) =>
 export const removeIngredient = (id) =>
   request(`/api/ingredients/${id}`, { method: 'DELETE' });
 
-// Recipes
-export const getRecipes = (ingredientNames) => {
-  const params = new URLSearchParams();
-  if (ingredientNames && ingredientNames.length > 0) {
-    params.set('ingredients', ingredientNames.join(','));
+// Recipes — TheMealDB (free tier)
+const MEALDB = 'https://www.themealdb.com/api/json/v1/1';
+
+export async function getMealsByIngredient(ingredient) {
+  const query = ingredient.trim().replace(/\s+/g, '_');
+  try {
+    const res = await fetch(`${MEALDB}/filter.php?i=${encodeURIComponent(query)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.meals || [];
+  } catch {
+    return [];
   }
-  return request(`/api/recipes?${params.toString()}`);
-};
+}
+
+export async function getMealById(id) {
+  const res = await fetch(`${MEALDB}/lookup.php?i=${id}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.meals?.[0] ?? null;
+}
 
 // Posts
 export const getPosts = () => request('/api/posts');

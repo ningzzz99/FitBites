@@ -11,13 +11,10 @@ router.get('/', requireAuth, (req, res) => {
     const db = getDb();
 
     const global = db.prepare(`
-      SELECT u.id as user_id, u.username, u.total_coins, u.banner_color, u.banner_icon,
-             COALESCE(MAX(dc.streak_count), 0) as streak_count
-      FROM users u
-      LEFT JOIN daily_challenges dc ON dc.user_id = u.id
-      WHERE u.shown_in_leaderboard = 1
-      GROUP BY u.id
-      ORDER BY streak_count DESC
+      SELECT id as user_id, username, total_coins, banner_color, banner_icon, current_streak as streak_count
+      FROM users
+      WHERE shown_in_leaderboard = 1
+      ORDER BY current_streak DESC, total_coins DESC
     `).all();
 
     const friendRows = db.prepare(`

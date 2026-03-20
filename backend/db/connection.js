@@ -29,6 +29,7 @@ function initSchema(db) {
       weight INTEGER,
       dietary_req TEXT,
       total_coins INTEGER NOT NULL DEFAULT 0,
+      current_streak INTEGER NOT NULL DEFAULT 0,
       shown_in_leaderboard INTEGER NOT NULL DEFAULT 1,
       banner_color TEXT NOT NULL DEFAULT '#4ade80',
       banner_icon TEXT NOT NULL DEFAULT 'leaf',
@@ -144,6 +145,9 @@ function initSchema(db) {
       UNIQUE(user_id, item_type, item_value)
     );
   `);
+
+  // Migrations for existing databases
+  try { db.exec('ALTER TABLE users ADD COLUMN current_streak INTEGER NOT NULL DEFAULT 0'); } catch {}
 
   seedData(db);
 }
