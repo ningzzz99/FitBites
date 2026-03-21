@@ -1,27 +1,19 @@
 import express from 'express';
-import { getDb } from '../db/connection.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, handle } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET /api/fun-facts
-router.get('/', requireAuth, (req, res) => {
-  const today = new Date().toISOString().split('T')[0];
+router.get('/', requireAuth, handle(async (_req, res) => {
   try {
-    const db = getDb();
-    let fact = db.prepare(
-      'SELECT id as fact_id, topic, content, fact_date FROM fun_facts WHERE fact_date = ? LIMIT 1'
-    ).get(today);
-    if (!fact) {
-      fact = db.prepare(
-        'SELECT id as fact_id, topic, content, fact_date FROM fun_facts ORDER BY RANDOM() LIMIT 1'
-      ).get();
-    }
-    return res.json(fact || null);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Server error' });
+    const response = await fetch('https://api.api-ninjas.com/v1/facts', {
+      headers: { 'X-Api-Key': process.env.API_NINJAS_KEY || '' },
+    });
+    const data = await response.json();
+    const fact = data?.[0]?.fact;
+    return res.json(fact ? { content: fact } : null);
+  } catch {
+    return res.json(null);
   }
-});
+}));
 
 export default router;

@@ -482,27 +482,29 @@ Returns `{ ok: true, remaining_coins }`.
 
 ### Summary
 
-A lightbulb button on the Home screen opens a modal showing a wellness tip — a rotating daily fact covering nutrition, exercise, recipes, or mental health.
+A lightbulb button on the Home screen opens a modal showing a random fact fetched live from an external API. Each time the modal opens, a fresh fact is fetched.
 
 ### High-level
 
-Fun facts are pre-seeded rows in the database. The backend picks today's fact based on the date, falling back to a random fact if no date-matched entry exists. The mobile app caches the fetched fact in component state — re-opening the modal within the same session does not make a second API call.
+Facts are fetched from the [API Ninjas Facts API](https://api-ninjas.com/api/facts) on every modal open — there is no local caching or database involvement. The backend proxies the request so the API key is never exposed to the mobile client. While the fact is loading, a spinner is shown inside the modal.
 
 ### Technical
 
 **Backend — `backend/routes/funfacts.js`**
 
 ```js
-const today = new Date().toISOString().split('T')[0];
-let fact = db.prepare('SELECT * FROM fun_facts WHERE date = ?').get(today);
-if (!fact) {
-  fact = db.prepare('SELECT * FROM fun_facts ORDER BY RANDOM() LIMIT 1').get();
-}
-return res.json(fact); // { topic, content }
+const response = await fetch('https://api.api-ninjas.com/v1/facts', {
+  headers: { 'X-Api-Key': process.env.API_NINJAS_KEY || '' },
+});
+const data = await response.json();
+const fact = data?.[0]?.fact;
+return res.json(fact ? { content: fact } : null);
 ```
+
+The API key is stored in `backend/.env` and loaded via the `--env-file=.env` flag in the npm start/dev scripts. Returns `{ content: string }` or `null` on failure.
 
 **Mobile — `mobile/src/screens/main/HomeScreen.js`**
 
-- `fact` state starts as `null`. `openFact()` sets `factOpen = true` and, if `fact` is still `null`, fetches from `GET /api/fun-facts`.
-- Once fetched, `fact` is cached in state — re-opening the modal in the same session does not make another API call.
-- The modal renders `fact.topic` (capitalised with `textTransform: 'capitalize'`) and `fact.content`.
+- `fact` and `factLoading` are both component state. `openFact()` sets `factOpen = true` and immediately calls `fetchFact()`.
+- `fetchFact()` sets `factLoading = true`, calls `GET /api/fun-facts`, then sets `fact` with the result and clears the loading state.
+- While `factLoading` is true, the modal renders an `ActivityIndicator` (platform-native spinner) in place of the fact text. Once the response arrives, the spinner is replaced with `fact.content`.

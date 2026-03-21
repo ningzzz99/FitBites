@@ -1,35 +1,29 @@
 import express from 'express';
 import { getDb } from '../db/connection.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, handle } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET /api/leaderboard
-router.get('/', requireAuth, (req, res) => {
+router.get('/', requireAuth, handle((req, res) => {
   const userId = req.session.userId;
-  try {
-    const db = getDb();
+  const db = getDb();
 
-    const global = db.prepare(`
-      SELECT id as user_id, username, total_coins, banner_color, banner_icon, current_streak as streak_count
-      FROM users
-      WHERE shown_in_leaderboard = 1
-      ORDER BY current_streak DESC, total_coins DESC
-    `).all();
+  const global = db.prepare(
+    `SELECT id as user_id, username, total_coins, banner_color, banner_icon, current_streak as streak_count
+     FROM users
+     WHERE shown_in_leaderboard = 1
+     ORDER BY current_streak DESC, total_coins DESC`
+  ).all();
 
-    const friendRows = db.prepare(`
-      SELECT CASE WHEN user_id_1 = ? THEN user_id_2 ELSE user_id_1 END as friend_id
-      FROM friends WHERE (user_id_1 = ? OR user_id_2 = ?) AND status = 'accepted'
-    `).all(userId, userId, userId);
+  const friendRows = db.prepare(
+    `SELECT CASE WHEN user_id_1 = ? THEN user_id_2 ELSE user_id_1 END as friend_id
+     FROM friends WHERE (user_id_1 = ? OR user_id_2 = ?) AND status = 'accepted'`
+  ).all(userId, userId, userId);
 
-    const friendIdSet = new Set([userId, ...friendRows.map((f) => f.friend_id)]);
-    const friends = global.filter((e) => friendIdSet.has(e.user_id));
+  const friendIdSet = new Set([userId, ...friendRows.map((f) => f.friend_id)]);
+  const friends = global.filter((e) => friendIdSet.has(e.user_id));
 
-    return res.json({ global, friends, currentUserId: userId });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Server error' });
-  }
-});
+  return res.json({ global, friends, currentUserId: userId });
+}));
 
 export default router;

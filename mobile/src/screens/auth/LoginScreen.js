@@ -27,7 +27,6 @@ export default function LoginScreen({ navigation }) {
     setError('');
     try {
       await signIn(email, password);
-      // Navigation is handled automatically by AppNavigator based on user state
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -13,7 +13,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { ApiError, addCustomChallenge, completeChallenge, deleteCustomChallenge, getChallenges, getFunFact } from '../../lib/api';
+import { 
+  ApiError, 
+  addCustomChallenge, 
+  completeChallenge, 
+  deleteCustomChallenge, 
+  getChallenges, getFunFact 
+} from '../../lib/api';
 import { colors } from '../../constants/theme';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -27,6 +33,7 @@ export default function HomeScreen({ navigation }) {
   const [coins, setCoins] = useState(0);
   const [weekDays, setWeekDays] = useState([]);
   const [factOpen, setFactOpen] = useState(false);
+  const [factLoading, setFactLoading] = useState(false);
   const [fact, setFact] = useState(null);
   const [customInput, setCustomInput] = useState('');
   const [addingCustom, setAddingCustom] = useState(false);
@@ -102,19 +109,22 @@ export default function HomeScreen({ navigation }) {
     }
   }
 
-  async function openFact() {
-    setFactOpen(true);
-    if (!fact) {
-      try {
-        const value = await getFunFact();
-        setFact(value);
-      } catch {
-        setFact(null);
-      }
+  async function fetchFact() {
+    setFactLoading(true);
+    try {
+      const value = await getFunFact();
+      setFact(value);
+    } catch {
+      setFact(null);
+    } finally {
+      setFactLoading(false);
     }
   }
 
-  const orderedWeek = useMemo(() => weekDays.slice(-7), [weekDays]);
+  async function openFact() {
+    setFactOpen(true);
+    fetchFact();
+  }
 
   if (loading) {
     return (
@@ -158,7 +168,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.streakValue}>{streak} days</Text>
           </View>
           <View style={styles.weekRow}>
-            {orderedWeek.map((entry, idx) => {
+            {weekDays.map((entry, idx) => {
               const day = new Date(`${entry.date}T00:00:00`);
               const dayIndex = day.getDay() === 0 ? 6 : day.getDay() - 1;
               return (
@@ -272,11 +282,10 @@ export default function HomeScreen({ navigation }) {
                 <Ionicons name="close" size={20} color={colors.textMuted} />
               </Pressable>
             </View>
-            {fact ? (
-              <>
-                <Text style={styles.factTopic}>{fact.topic}</Text>
-                <Text style={styles.factContent}>{fact.content}</Text>
-              </>
+            {factLoading ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : fact ? (
+              <Text style={styles.factContent}>{fact.content}</Text>
             ) : (
               <Text style={styles.factContent}>No fact available right now.</Text>
             )}
