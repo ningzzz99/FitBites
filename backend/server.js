@@ -9,13 +9,10 @@ import authRoutes from './routes/auth.js';
 import challengesRoutes from './routes/challenges.js';
 import habitsRoutes from './routes/habits.js';
 import ingredientsRoutes from './routes/ingredients.js';
-import recipesRoutes from './routes/recipes.js';
 import postsRoutes from './routes/posts.js';
 import leaderboardRoutes from './routes/leaderboard.js';
 import friendsRoutes from './routes/friends.js';
 import profileRoutes from './routes/profile.js';
-import funfactsRoutes from './routes/funfacts.js';
-import usersRoutes from './routes/users.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -37,20 +34,12 @@ app.use('/api/challenges', challengesRoutes);
 app.use('/api/habits', habitsRoutes);
 app.use('/api/user-habits', habitsRoutes);
 app.use('/api/ingredients', ingredientsRoutes);
-app.use('/api/recipes', recipesRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/friends', friendsRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/fun-facts', funfactsRoutes);
-app.use('/api/users', usersRoutes);
 
-try {
-  initDb();
-} catch (err) {
-  console.error('Failed to initialize database:', err);
-  process.exit(1);
-}
+initDb();
 
 app.listen(process.env.PORT || 3001, () => {
   console.log(`FitBites backend running on http://localhost:${process.env.PORT || 3001}`);

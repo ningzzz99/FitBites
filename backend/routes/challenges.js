@@ -1,47 +1,45 @@
 import express from 'express';
 import { getDb } from '../db/connection.js';
-import { requireAuth, handle } from '../middleware/auth.js';
+import { requireAuth, handle } from '../middleware.js';
 
 const router = express.Router();
 
-function computeStreak(logs) {
-  const completed = new Set(logs.filter((l) => l.completed).map((l) => l.date));
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const cursor = new Date(today);
-  if (!completed.has(today.toISOString().split('T')[0])) cursor.setDate(cursor.getDate() - 1);
+const today = () => new Date().toISOString().split('T')[0];
+
+function getCompletedDates(db, userId) {
+  return new Set(
+    db.prepare(
+      'SELECT date_completed FROM daily_challenges WHERE user_id = ? AND date_completed IS NOT NULL'
+    ).all(userId).map((r) => r.date_completed)
+  );
+}
+
+function computeStreak(completed) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  if (!completed.has(d.toISOString().split('T')[0])) d.setDate(d.getDate() - 1);
   let streak = 0;
-  while (true) {
-    const dateStr = cursor.toISOString().split('T')[0];
-    if (!completed.has(dateStr)) break;
+  while (completed.has(d.toISOString().split('T')[0])) {
     streak++;
-    cursor.setDate(cursor.getDate() - 1);
+    d.setDate(d.getDate() - 1);
   }
   return streak;
 }
 
-function weeklyView(logs) {
-  const completed = new Set(logs.filter((l) => l.completed).map((l) => l.date));
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+function weeklyView(completed) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
-    const dateStr = d.toISOString().split('T')[0];
+    const day = new Date(d);
+    day.setDate(day.getDate() - (6 - i));
+    const dateStr = day.toISOString().split('T')[0];
     return { date: dateStr, completed: completed.has(dateStr) };
   });
 }
 
-function getCompletionLogs(db, userId) {
-  const history = db.prepare(
-    'SELECT date_completed as date, status FROM daily_challenges WHERE user_id = ? AND date_completed IS NOT NULL'
-  ).all(userId);
-  return history.map((r) => ({ date: r.date, completed: r.status === 'completed' }));
-}
-
 router.get('/', requireAuth, handle((req, res) => {
   const userId = req.session.userId;
-  const today = new Date().toISOString().split('T')[0];
+  const todayStr = today();
   const db = getDb();
 
   const userHabits = db.prepare(
@@ -51,7 +49,6 @@ router.get('/', requireAuth, handle((req, res) => {
     'SELECT id as habit_id, task FROM custom_habits WHERE user_id = ?'
   ).all(userId);
 
-  // Lazily create today's challenge rows for any new/missing habits
   const insHabit = db.prepare(
     `INSERT OR IGNORE INTO daily_challenges (user_id, habit_id, status, created_at)
      SELECT ?, ?, 'pending', datetime('now')
@@ -66,8 +63,8 @@ router.get('/', requireAuth, handle((req, res) => {
        SELECT 1 FROM daily_challenges WHERE user_id = ? AND custom_habit_id = ? AND date(created_at) = ?
      )`
   );
-  for (const h of userHabits) insHabit.run(userId, h.habit_id, userId, h.habit_id, today);
-  for (const h of customHabits) insCustom.run(userId, h.habit_id, userId, h.habit_id, today);
+  for (const h of userHabits) insHabit.run(userId, h.habit_id, userId, h.habit_id, todayStr);
+  for (const h of customHabits) insCustom.run(userId, h.habit_id, userId, h.habit_id, todayStr);
 
   const challenges = db.prepare(
     `SELECT dc.id as challenge_id, dc.habit_id, dc.custom_habit_id, dc.status,
@@ -77,15 +74,15 @@ router.get('/', requireAuth, handle((req, res) => {
      LEFT JOIN habits h ON h.id = dc.habit_id
      LEFT JOIN custom_habits ch ON ch.id = dc.custom_habit_id
      WHERE dc.user_id = ? AND date(dc.created_at) = ?`
-  ).all(userId, today);
+  ).all(userId, todayStr);
 
-  const logs = getCompletionLogs(db, userId);
+  const completed = getCompletedDates(db, userId);
   const profile = db.prepare('SELECT total_coins FROM users WHERE id = ?').get(userId);
 
   return res.json({
     challenges,
-    streak: computeStreak(logs),
-    week: weeklyView(logs),
+    streak: computeStreak(completed),
+    week: weeklyView(completed),
     coins: profile?.total_coins ?? 0,
   });
 }));
@@ -93,7 +90,6 @@ router.get('/', requireAuth, handle((req, res) => {
 router.patch('/:id', requireAuth, handle((req, res) => {
   const userId = req.session.userId;
   const challengeId = Number(req.params.id);
-  const today = new Date().toISOString().split('T')[0];
   const db = getDb();
 
   const challenge = db.prepare(
@@ -101,18 +97,19 @@ router.patch('/:id', requireAuth, handle((req, res) => {
   ).get(challengeId, userId);
   if (!challenge) return res.status(404).json({ error: 'Not found' });
 
+  const { total_coins } = db.prepare('SELECT total_coins FROM users WHERE id = ?').get(userId);
+
   db.prepare(
     "UPDATE daily_challenges SET status = 'completed', date_completed = ?, proof_image_url = ?, coins_issued = 10 WHERE id = ?"
-  ).run(today, req.body.proof_image_url || null, challengeId);
+  ).run(today(), req.body.proof_image_url || null, challengeId);
   db.prepare('UPDATE users SET total_coins = total_coins + 10 WHERE id = ?').run(userId);
 
-  const logs = getCompletionLogs(db, userId);
-  const streak = computeStreak(logs);
+  const completed = getCompletedDates(db, userId);
+  const streak = computeStreak(completed);
   db.prepare('UPDATE daily_challenges SET streak_count = ? WHERE id = ?').run(streak, challengeId);
   db.prepare('UPDATE users SET current_streak = ? WHERE id = ?').run(streak, userId);
 
-  const user = db.prepare('SELECT total_coins FROM users WHERE id = ?').get(userId);
-  return res.json({ ok: true, coins: user.total_coins, streak });
+  return res.json({ ok: true, coins: total_coins + 10, streak });
 }));
 
 router.post('/custom', requireAuth, handle((req, res) => {
@@ -128,7 +125,6 @@ router.post('/custom', requireAuth, handle((req, res) => {
 router.delete('/custom/:id', requireAuth, handle((req, res) => {
   const userId = req.session.userId;
   const customHabitId = Number(req.params.id);
-  const today = new Date().toISOString().split('T')[0];
   const db = getDb();
 
   const habit = db.prepare(
@@ -138,7 +134,7 @@ router.delete('/custom/:id', requireAuth, handle((req, res) => {
 
   db.prepare(
     "DELETE FROM daily_challenges WHERE user_id = ? AND custom_habit_id = ? AND status = 'pending' AND date(created_at) = ?"
-  ).run(userId, customHabitId, today);
+  ).run(userId, customHabitId, today());
   db.prepare('DELETE FROM custom_habits WHERE id = ? AND user_id = ?').run(customHabitId, userId);
   return res.json({ ok: true });
 }));

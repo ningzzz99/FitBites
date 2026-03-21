@@ -10,9 +10,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useAuth } from '../../context/AuthContext';
-import { ApiError } from '../../lib/api';
-import { colors } from '../../constants/theme';
+import { useAuth } from '../../AuthContext';
+import { colors } from '../../theme';
 
 export default function LoginScreen({ navigation }) {
   const { signIn } = useAuth();
@@ -28,11 +27,7 @@ export default function LoginScreen({ navigation }) {
     try {
       await signIn(email, password);
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Could not sign in.');
-      }
+      setError(err?.message || 'Could not sign in.');
     } finally {
       setLoading(false);
     }

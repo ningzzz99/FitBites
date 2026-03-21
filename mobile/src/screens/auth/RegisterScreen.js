@@ -10,9 +10,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useAuth } from '../../context/AuthContext';
-import { ApiError } from '../../lib/api';
-import { colors } from '../../constants/theme';
+import { useAuth } from '../../AuthContext';
+import { colors } from '../../theme';
 
 export default function RegisterScreen({ navigation }) {
   const { signUp } = useAuth();
@@ -36,11 +35,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       await signUp(username, email, password);
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Could not register.');
-      }
+      setError(err?.message || 'Could not register.');
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,9 +9,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { ApiError, getHabits, getUserHabits, saveUserHabits } from '../../lib/api';
-import { useAuth } from '../../context/AuthContext';
-import { colors } from '../../constants/theme';
+import { getHabits, getUserHabits, saveUserHabits } from '../../api';
+import { useAuth } from '../../AuthContext';
+import { colors } from '../../theme';
 
 export default function OnboardingScreen({ navigation, route }) {
   const { finishOnboarding } = useAuth();
@@ -42,8 +42,6 @@ export default function OnboardingScreen({ navigation, route }) {
     load();
   }, [editMode]);
 
-  const selectedCount = useMemo(() => selectedIds.length, [selectedIds]);
-
   function toggleHabit(id) {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -62,11 +60,7 @@ export default function OnboardingScreen({ navigation, route }) {
         finishOnboarding();
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Could not save habits.');
-      }
+      setError(err?.message || 'Could not save habits.');
     } finally {
       setSaving(false);
     }
@@ -115,8 +109,8 @@ export default function OnboardingScreen({ navigation, route }) {
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <Pressable
-          disabled={selectedCount === 0 || saving}
-          style={[styles.button, (selectedCount === 0 || saving) && styles.buttonDisabled]}
+          disabled={selectedIds.length === 0 || saving}
+          style={[styles.button, (selectedIds.length === 0 || saving) && styles.buttonDisabled]}
           onPress={handleFinish}
         >
           {saving ? (
@@ -125,7 +119,7 @@ export default function OnboardingScreen({ navigation, route }) {
             <Text style={styles.buttonText}>
               {editMode
                 ? 'Save changes'
-                : `Start with ${selectedCount} habit${selectedCount === 1 ? '' : 's'}`}
+                : `Start with ${selectedIds.length} habit${selectedIds.length === 1 ? '' : 's'}`}
             </Text>
           )}
         </Pressable>

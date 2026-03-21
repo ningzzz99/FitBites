@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { getDb } from '../db/connection.js';
-import { handle } from '../middleware/auth.js';
+import { handle } from '../middleware.js';
 
 const router = express.Router();
 
@@ -13,17 +13,12 @@ router.post('/register', handle(async (req, res) => {
 
   const db = getDb();
   const passwordHash = await bcrypt.hash(password, 10);
-  try {
-    const result = db.prepare(
-      'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)'
-    ).run(username, email, passwordHash);
-    req.session.userId = result.lastInsertRowid;
-    req.session.username = username;
-    return res.json({ ok: true });
-  } catch (err) {
-    if (err.message?.includes('UNIQUE')) return res.status(409).json({ error: 'Username or email already taken' });
-    throw err;
-  }
+  const result = db.prepare(
+    'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)'
+  ).run(username, email, passwordHash);
+  req.session.userId = result.lastInsertRowid;
+  req.session.username = username;
+  return res.json({ ok: true });
 }));
 
 router.post('/login', handle(async (req, res) => {

@@ -19,17 +19,14 @@ import {
   getPosts,
   getReplies,
   upvotePost,
-} from '../../lib/api';
-import { colors } from '../../constants/theme';
-
-const TOPICS = ['general', 'nutrition', 'recipe', 'mental-health'];
+} from '../../api';
+import { colors } from '../../theme';
 
 export default function CommunityScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState([]);
   const [content, setContent] = useState('');
-  const [topic, setTopic] = useState('general');
   const [anonymous, setAnonymous] = useState(false);
   const [posting, setPosting] = useState(false);
   const [expandedPostId, setExpandedPostId] = useState(null);
@@ -64,7 +61,7 @@ export default function CommunityScreen({ navigation }) {
     if (content.trim().length < 5) return;
     setPosting(true);
     try {
-      await createPost(content.trim(), topic, anonymous);
+      await createPost(content.trim(), anonymous);
       setContent('');
       await loadPosts(false);
     } finally {
@@ -217,19 +214,6 @@ export default function CommunityScreen({ navigation }) {
           placeholder="Share a question, tip, or motivation"
           placeholderTextColor={colors.textMuted}
         />
-        <View style={styles.topicRow}>
-          {TOPICS.map((t) => (
-            <Pressable
-              key={t}
-              style={[styles.topicChip, topic === t && styles.topicChipActive]}
-              onPress={() => setTopic(t)}
-            >
-              <Text style={[styles.topicChipText, topic === t && styles.topicChipTextActive]}>
-                {t}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
         <View style={styles.toggleRow}>
           <Text style={styles.muted}>Post anonymously</Text>
           <Switch value={anonymous} onValueChange={setAnonymous} />
@@ -280,14 +264,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, borderRadius: 10,
     padding: 10, minHeight: 90, textAlignVertical: 'top', color: colors.text,
   },
-  topicRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  topicChip: {
-    borderRadius: 999, borderWidth: 1, borderColor: colors.border,
-    paddingHorizontal: 10, paddingVertical: 4,
-  },
-  topicChipActive: { backgroundColor: colors.primarySoft, borderColor: colors.primary },
-  topicChipText: { color: colors.textMuted, fontSize: 12 },
-  topicChipTextActive: { color: colors.primary, fontWeight: '700' },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   postButton: {
     backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 10, alignItems: 'center',

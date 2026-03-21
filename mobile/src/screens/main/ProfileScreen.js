@@ -14,13 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  ApiError,
   getProfile,
   unlockProfileItem,
   updateProfile,
-} from '../../lib/api';
-import { useAuth } from '../../context/AuthContext';
-import { colors } from '../../constants/theme';
+} from '../../api';
+import { useAuth } from '../../AuthContext';
+import { colors } from '../../theme';
 
 const BANNER_COLORS = ['#4ade80', '#60a5fa', '#f472b6', '#fb923c', '#a78bfa', '#34d399', '#fbbf24'];
 const BANNER_ICONS = [
@@ -96,14 +95,22 @@ export default function ProfileScreen() {
         dietary_req: dietaryReq || null,
         banner_color: bannerColor,
         banner_icon: bannerIcon,
-        shown_in_leaderboard: shownOnLb,
       });
       await loadProfile(false);
       await refreshUser();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not save profile.');
+      setError(err?.message || 'Could not save profile.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleToggleLeaderboard(value) {
+    setShownOnLb(value);
+    try {
+      await updateProfile({ shown_in_leaderboard: value });
+    } catch {
+      setShownOnLb(!value);
     }
   }
 
@@ -115,15 +122,10 @@ export default function ProfileScreen() {
       if (type === 'color') setBannerColor(value);
       if (type === 'icon') setBannerIcon(value);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not unlock item.');
+      setError(err?.message || 'Could not unlock item.');
     } finally {
       setUnlocking(null);
     }
-  }
-
-  async function handleSignOut() {
-    await signOut();
-    // Navigator will redirect to auth stack automatically
   }
 
   if (loading) {
@@ -167,7 +169,7 @@ export default function ProfileScreen() {
           <Text style={styles.username}>{profile.username}</Text>
           <Text style={styles.metaText}>Coins {profile.total_coins} | Streak {data.streak}</Text>
         </View>
-        <Pressable style={styles.logoutBtn} onPress={handleSignOut}>
+        <Pressable style={styles.logoutBtn} onPress={signOut}>
           <Ionicons name="log-out-outline" size={20} color={colors.danger} />
         </Pressable>
       </View>
@@ -270,7 +272,7 @@ export default function ProfileScreen() {
 
         <View style={styles.toggleRow}>
           <Text style={styles.label}>Show me on leaderboard</Text>
-          <Switch value={shownOnLb} onValueChange={setShownOnLb} />
+          <Switch value={shownOnLb} onValueChange={handleToggleLeaderboard} />
         </View>
       </View>
 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getCurrentUser, login, logout, register } from '../lib/api';
+import { getCurrentUser, login, logout, register } from './api';
 
 const AuthContext = createContext(null);
 
@@ -38,12 +38,8 @@ export function AuthProvider({ children }) {
   }
 
   async function refreshUser() {
-    try {
-      const data = await getCurrentUser();
-      setUser(data.user);
-    } catch {
-      setUser(null);
-    }
+    const data = await getCurrentUser();
+    setUser(data.user);
   }
 
   return (

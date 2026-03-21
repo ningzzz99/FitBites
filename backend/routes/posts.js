@@ -1,13 +1,13 @@
 import express from 'express';
 import { getDb } from '../db/connection.js';
-import { requireAuth, handle } from '../middleware/auth.js';
+import { requireAuth, handle } from '../middleware.js';
 
 const router = express.Router();
 
 router.get('/', requireAuth, handle((req, res) => {
   const db = getDb();
   const posts = db.prepare(
-    `SELECT p.id as post_id, p.user_id, p.content, p.topic, p.anonymous, p.upvotes, p.created_at,
+    `SELECT p.id as post_id, p.user_id, p.content, p.anonymous, p.upvotes, p.created_at,
             u.username,
             CASE WHEN pu.id IS NOT NULL THEN 1 ELSE 0 END as user_upvoted
      FROM posts p
@@ -20,11 +20,11 @@ router.get('/', requireAuth, handle((req, res) => {
 
 router.post('/', requireAuth, handle((req, res) => {
   const userId = req.session.userId;
-  const { content, topic, anonymous } = req.body;
+  const { content, anonymous } = req.body;
   if (!content || content.trim().length < 5) return res.status(400).json({ error: 'Content too short' });
   const db = getDb();
   db.prepare('INSERT INTO posts (user_id, content, topic, anonymous) VALUES (?, ?, ?, ?)')
-    .run(userId, content.trim(), topic || 'general', anonymous ? 1 : 0);
+    .run(userId, content.trim(), 'general', anonymous ? 1 : 0);
   // Award a badge on the user's first ever post
   const postCount = db.prepare('SELECT COUNT(*) as c FROM posts WHERE user_id = ?').get(userId).c;
   if (postCount === 1) {

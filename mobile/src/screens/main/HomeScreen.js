@@ -19,8 +19,8 @@ import {
   completeChallenge, 
   deleteCustomChallenge, 
   getChallenges, getFunFact 
-} from '../../lib/api';
-import { colors } from '../../constants/theme';
+} from '../../api';
+import { colors } from '../../theme';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 

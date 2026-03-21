@@ -21,8 +21,8 @@ import {
   getMealById,
   removeIngredient,
   updateIngredientQuantity,
-} from '../../lib/api';
-import { colors } from '../../constants/theme';
+} from '../../api';
+import { colors } from '../../theme';
 
 export default function PantryScreen({ navigation }) {
   const [tab, setTab] = useState('pantry');

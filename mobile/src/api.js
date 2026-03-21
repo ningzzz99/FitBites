@@ -115,10 +115,10 @@ export async function getMealById(id) {
 // Posts
 export const getPosts = () => request('/api/posts');
 
-export const createPost = (content, topic, anonymous) =>
+export const createPost = (content, anonymous) =>
   request('/api/posts', {
     method: 'POST',
-    body: JSON.stringify({ content, topic, anonymous }),
+    body: JSON.stringify({ content, anonymous }),
   });
 
 export const upvotePost = (postId) =>
@@ -151,7 +151,7 @@ export const respondFriend = (friendId, status) =>
   });
 
 // Users search
-export const searchUsers = (q) => request(`/api/users/search?q=${encodeURIComponent(q)}`);
+export const searchUsers = (q) => request(`/api/leaderboard/user-search?q=${encodeURIComponent(q)}`);
 
 // Profile
 export const getProfile = () => request('/api/profile');
@@ -165,5 +165,19 @@ export const unlockProfileItem = (item_type, item_value) =>
     body: JSON.stringify({ item_type, item_value }),
   });
 
-// Fun facts
-export const getFunFact = () => request('/api/fun-facts');
+// Fun facts — API Ninjas (called directly from client)
+const API_NINJAS_KEY = '';
+
+export async function getFunFact() {
+  try {
+    const res = await fetch('https://api.api-ninjas.com/v1/facts', {
+      headers: { 'X-Api-Key': API_NINJAS_KEY },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const fact = data?.[0]?.fact;
+    return fact ? { content: fact } : null;
+  } catch {
+    return null;
+  }
+}

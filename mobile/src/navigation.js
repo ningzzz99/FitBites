@@ -5,20 +5,20 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View } from 'react-native';
 
-import { useAuth } from '../context/AuthContext';
-import { colors } from '../constants/theme';
+import { useAuth } from './AuthContext';
+import { colors } from './theme';
 
 // Auth screens
-import LoginScreen from '../screens/auth/LoginScreen';
-import RegisterScreen from '../screens/auth/RegisterScreen';
-import OnboardingScreen from '../screens/auth/OnboardingScreen';
+import LoginScreen from './screens/auth/LoginScreen';
+import RegisterScreen from './screens/auth/RegisterScreen';
+import OnboardingScreen from './screens/auth/OnboardingScreen';
 
 // Main screens
-import HomeScreen from '../screens/main/HomeScreen';
-import PantryScreen from '../screens/main/PantryScreen';
-import CommunityScreen from '../screens/main/CommunityScreen';
-import LeaderboardScreen from '../screens/main/LeaderboardScreen';
-import ProfileScreen from '../screens/main/ProfileScreen';
+import HomeScreen from './screens/main/HomeScreen';
+import PantryScreen from './screens/main/PantryScreen';
+import CommunityScreen from './screens/main/CommunityScreen';
+import LeaderboardScreen from './screens/main/LeaderboardScreen';
+import ProfileScreen from './screens/main/ProfileScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

@@ -1,6 +1,6 @@
 import express from 'express';
 import { getDb } from '../db/connection.js';
-import { requireAuth, handle } from '../middleware/auth.js';
+import { requireAuth, handle } from '../middleware.js';
 
 const router = express.Router();
 
@@ -8,7 +8,7 @@ router.get('/', requireAuth, handle((req, res) => {
   const userId = req.session.userId;
   const db = getDb();
   const user = db.prepare(
-    'SELECT id, username, email, height, weight, dietary_req, total_coins, current_streak, shown_in_leaderboard, banner_color, banner_icon FROM users WHERE id = ?'
+    'SELECT id, username, height, weight, dietary_req, total_coins, current_streak, shown_in_leaderboard, banner_color, banner_icon FROM users WHERE id = ?'
   ).get(userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -29,6 +29,7 @@ router.get('/', requireAuth, handle((req, res) => {
 
 router.patch('/', requireAuth, handle((req, res) => {
   const { height, weight, dietary_req, banner_color, banner_icon, shown_in_leaderboard } = req.body;
+  const lbVal = shown_in_leaderboard !== undefined ? (shown_in_leaderboard ? 1 : 0) : null;
   const db = getDb();
   db.prepare(
     `UPDATE users SET
@@ -37,7 +38,7 @@ router.patch('/', requireAuth, handle((req, res) => {
       dietary_req = COALESCE(?, dietary_req),
       banner_color = COALESCE(?, banner_color),
       banner_icon = COALESCE(?, banner_icon),
-      shown_in_leaderboard = COALESCE(?, shown_in_leaderboard)
+      shown_in_leaderboard = CASE WHEN ? IS NOT NULL THEN ? ELSE shown_in_leaderboard END
      WHERE id = ?`
   ).run(
     height ?? null,
@@ -45,7 +46,8 @@ router.patch('/', requireAuth, handle((req, res) => {
     dietary_req ?? null,
     banner_color || null,
     banner_icon || null,
-    shown_in_leaderboard !== undefined ? (shown_in_leaderboard ? 1 : 0) : null,
+    lbVal,
+    lbVal,
     req.session.userId
   );
   return res.json({ ok: true });
@@ -72,8 +74,7 @@ router.post('/unlock', requireAuth, handle((req, res) => {
 
   db.prepare('UPDATE users SET total_coins = total_coins - ? WHERE id = ?').run(cost, userId);
   db.prepare('INSERT OR IGNORE INTO unlocked_banner_items (user_id, item_type, item_value) VALUES (?, ?, ?)').run(userId, item_type, item_value);
-  const updated = db.prepare('SELECT total_coins FROM users WHERE id = ?').get(userId);
-  return res.json({ ok: true, remaining_coins: updated.total_coins });
+  return res.json({ ok: true, remaining_coins: user.total_coins - cost });
 }));
 
 export default router;

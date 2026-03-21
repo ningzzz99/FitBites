@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -12,14 +12,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  ApiError,
   addFriend,
   getFriends,
   getLeaderboard,
   respondFriend,
   searchUsers,
-} from '../../lib/api';
-import { colors } from '../../constants/theme';
+} from '../../api';
+import { colors } from '../../theme';
 
 export default function LeaderboardScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
@@ -41,10 +40,7 @@ export default function LeaderboardScreen({ navigation }) {
       setFriendRowsLeaderboard(board.friends);
       setCurrentUserId(board.currentUserId);
       setFriendRows(friends);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        navigation.navigate('Login');
-      }
+    } catch {
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -62,10 +58,7 @@ export default function LeaderboardScreen({ navigation }) {
     await loadData(false);
   }
 
-  const pendingIncoming = useMemo(
-    () => friendRows.filter((row) => row.user_id_2 === currentUserId && row.status === 'pending'),
-    [friendRows, currentUserId]
-  );
+  const pendingIncoming = friendRows.filter((row) => row.user_id_2 === currentUserId && row.status === 'pending');
 
   const visibleRows = tab === 'global' ? globalRows : friendRowsLeaderboard;
 
