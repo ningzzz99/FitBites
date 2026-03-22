@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Database files (keep tracked)
+!*.db
+!*.db-shm
+!*.db-wal
+
+# Environment & secrets
+.env
+.env.local
+.env.*
+
+# Expo / React Native
+mobile/.expo/
+mobile/dist/
+mobile/ios/build/
+mobile/ios/Pods/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/local.properties
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
